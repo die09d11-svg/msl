@@ -1,0 +1,13 @@
+﻿FROM julia:1.10
+
+WORKDIR /app/backend
+
+COPY backend/Project.toml /app/backend/Project.toml
+
+RUN julia -e 'using Pkg; Pkg.activate("/app/backend"); Pkg.instantiate()'
+
+COPY backend /app/backend
+
+EXPOSE 8000
+
+CMD ["julia", "--project=/app/backend", "-t", "auto", "/app/backend/server.jl"]

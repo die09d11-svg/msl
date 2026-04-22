@@ -1,0 +1,27 @@
+﻿services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: msl-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVER_MODE=server
+    networks:
+      - msl-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: msl-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - msl-network
+
+networks:
+  msl-network:
