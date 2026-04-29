@@ -1,0 +1,115 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Se ejecuta cuando hagas: git push origin v1.0.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # PASO 1: Descargar el código
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      # PASO 2: Instalar Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      # PASO 3: Instalar dependencias del frontend
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci  # Más rápido que npm install
+      
+      # PASO 4: Build para DESKTOP
+      - name: Build frontend (Desktop)
+        working-directory: ./frontend
+        run: |
+          cp .env.desktop .env.local
+          npm run build
+          mv build build-desktop
+      
+      # PASO 5: Build para SERVER
+      - name: Build frontend (Server)
+        working-directory: ./frontend
+        run: |
+          cp .env.server .env.local
+          npm run build
+          mv build build-server
+      
+      # PASO 6: Instalar dependencias del launcher
+      - name: Install launcher dependencies
+        working-directory: ./launcher
+        run: npm ci
+      
+      # PASO 7: Crear archivos comprimidos
+      - name: Create release packages
+        run: |
+          mkdir -p releases
+          
+          # Paquete Desktop (Windows/Linux)
+          zip -r releases/msl-process-desktop-${{ github.ref_name }}.zip \
+            backend/ \
+            frontend/build-desktop/ \
+            launcher/ \
+            installers/desktop/ \
+            README.md \
+            LICENSE
+          
+          # Paquete Server (Ubuntu Server)
+          tar -czf releases/msl-process-server-${{ github.ref_name }}.tar.gz \
+            backend/ \
+            frontend/build-server/ \
+            launcher/ \
+            installers/server/ \
+            README.md \
+            LICENSE
+      
+      # PASO 8: Crear release en GitHub automáticamente
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: releases/*
+          body: |
+            ## 🚀 MSL Process ${{ github.ref_name }}
+            
+            ### 📦 Descargas disponibles:
+            
+            - **`msl-process-desktop-${{ github.ref_name }}.zip`**  
+              Versión escritorio para Windows/Linux
+              
+            - **`msl-process-server-${{ github.ref_name }}.tar.gz`**  
+              Versión servidor para Ubuntu Server
+            
+            ### 🔧 Instalación:
+            
+            **Windows Desktop:**
+```powershell
+            # Extraer ZIP
+            # Ejecutar como administrador:
+            installers\desktop\install-windows.ps1
+```
+            
+            **Linux Desktop:**
+```bash
+            bash installers/desktop/install-linux.sh
+```
+            
+            **Ubuntu Server:**
+```bash
+            sudo bash installers/server/install-ubuntu-server.sh
+```
+            
+            ### 📋 Requisitos:
+            - Julia 1.9+
+            - Node.js 18+
+            - 4 GB RAM (8 GB recomendado)
+            
+            ### 📚 Ver documentación completa:
+            [README.md](https://github.com/${{ github.repository }}#readme)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

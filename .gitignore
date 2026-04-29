@@ -1,0 +1,25 @@
+﻿# Node
+node_modules/
+frontend/node_modules/
+
+# Build frontend
+frontend/build/
+
+# Julia
+backend/Manifest.toml
+*.ji
+
+# Docker temporales
+.dockerignore
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Variables sensibles
+.env
+.env.local
